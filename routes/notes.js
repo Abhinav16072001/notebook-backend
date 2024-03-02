@@ -7,7 +7,7 @@ const { body, validationResult } = require('express-validator');
 // ROUTE 1: Get All the Notes using: GET "/api/notes/getuser". Login required
 router.get('/fetchallnotes', fetchuser, async (req, res) => {
     try {
-        const notes = await Note.find({ user: req.user.id });
+        const notes = await Note.find({});
         res.json(notes)
     } catch (error) {
         console.error(error.message);
@@ -16,9 +16,7 @@ router.get('/fetchallnotes', fetchuser, async (req, res) => {
 })
 
 // ROUTE 2: Add a new Note using: POST "/api/notes/addnote". Login required
-router.post('/addnote', fetchuser, [
-    body('title', 'Enter a valid title').isLength({ min: 3 }),
-    body('description', 'Description must be atleast 5 characters').isLength({ min: 5 }),], async (req, res) => {
+router.post('/addnote', fetchuser, async (req, res) => {
         try {
             const { title, description, tag } = req.body;
 
@@ -54,9 +52,6 @@ router.put('/updatenote/:id', fetchuser, async (req, res) => {
         let note = await Note.findById(req.params.id);
         if (!note) { return res.status(404).send("Not Found") }
 
-        if (note.user.toString() !== req.user.id) {
-            return res.status(401).send("Not Allowed");
-        }
         note = await Note.findByIdAndUpdate(req.params.id, { $set: newNote }, { new: true })
         res.json({ note });
     } catch (error) {
@@ -73,10 +68,6 @@ router.delete('/deletenote/:id', fetchuser, async (req, res) => {
         if (!note) { return res.status(404).send("Not Found") }
 
         // Allow deletion only if user owns this Note
-        if (note.user.toString() !== req.user.id) {
-            return res.status(401).send("Not Allowed");
-        }
-
         note = await Note.findByIdAndDelete(req.params.id)
         res.json({ "Success": "Note has been deleted", note: note });
     } catch (error) {
